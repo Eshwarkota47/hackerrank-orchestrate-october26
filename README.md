@@ -31,13 +31,31 @@ Your solution must:
 - Generate one prediction row for every request in `dataset/deletion_requests.csv`
 - Write the final predictions to `output.csv` in the repository root
 
-Run the starter Python entry point with:
+Run the deletion audit agent with:
 
 ```bash
-python3 code/main.py
+python code/main.py --input dataset/deletion_requests.csv --output output.csv
 ```
 
-The blank template at `dataset/output.csv` is provided as a reference. Your final generated file for submission must be the root-level `output.csv`.
+To run the automated evaluation benchmark and custom edge-case scenarios:
+
+```bash
+python code/evaluation/main.py
+```
+
+The blank template at `dataset/output.csv` is provided as a reference. Your final generated file for submission is the root-level `output.csv`.
+
+---
+
+## Solution Architecture & Design
+
+The solution is implemented in `code/` with a modular, highly scalable hybrid architecture:
+
+1. **Intent Classifier (`code/intent.py`)**: Discriminate authentic deletion requests from data access (GDPR Article 15), rectification, marketing opt-outs, and login assistance requests, classifying them as `NOT_APPLICABLE` with `steps_json = []`.
+2. **Identity Resolver (`code/identity.py`)**: Traverses `user_identities.csv` and `user_audit_log.csv` to reconstruct the complete identity graph for each user, including historical emails, phone numbers, and cryptographic SHA-256 digests.
+3. **Multi-Modal Evidence Parser (`code/evidence_parser.py`)**: Parses all 94 evidence files across SQLite relational databases, JSON snapshots, distributed observability logs (with two-pass distributed `trace_id` correlation), handover notes, PDF extracts, and UI administration screenshots.
+4. **Decision Engine & Auditor (`code/auditor.py`)**: Maps deletion requests to evidence observations, correlates temporal batch activity, synthesizes findings, remediations, and verifications according to `deletion_rules.csv`, and enforces strict canonical phase and operation ranking.
+5. **Evaluation Framework (`code/evaluation/main.py`)**: Benchmarks the agent against canonical ground truth and participant-created custom evaluation scenarios, generating comprehensive reports in `code/evaluation/evaluation_report.md` and `code/evaluation/usage_report.md`.
 
 
 ## Dataset
